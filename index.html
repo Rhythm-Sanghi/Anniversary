@@ -1963,10 +1963,16 @@ RULES:
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'hi-IN';
+      utterance.rate = 0.92; // Slightly slower makes Hindi sound more natural
+      utterance.pitch = 1.0;
       
-      // Attempt to load Hindi voice
+      // Attempt to load Hindi voice, prioritizing high-quality Google voice if on Chrome
       const voices = window.speechSynthesis.getVoices();
-      const hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india'));
+      let hindiVoice = voices.find(v => (v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india')) && v.name.toLowerCase().includes('google'));
+      if (!hindiVoice) {
+        hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india'));
+      }
+      
       if (hindiVoice) {
         utterance.voice = hindiVoice;
       }
