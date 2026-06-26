@@ -1946,29 +1946,61 @@ RULES:
           
         } catch (err) {
           console.error("ElevenLabs failed, triggering fallback teleprinter typewriter animation:", err);
-          typewriterFallback(cleanText);
+          typewriterFallback(cleanText, true);
         }
       } else {
         // Fallback directly to typewriter scroll
-        typewriterFallback(cleanText);
+        typewriterFallback(cleanText, false);
       }
     }
 
-    function typewriterFallback(text) {
-      addTransmissionFeed("SYSTEM", "ElevenLabs Voice Stream disconnected. Displaying Teleprinter transcription.");
+    function speakWithBrowserTTS(text, callback) {
+      if (!('speechSynthesis' in window)) {
+        if (callback) callback();
+        return;
+      }
       
-      const charRate = 60; // ms per letter
-      const duration = text.length * charRate;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'hi-IN';
+      
+      // Attempt to load Hindi voice
+      const voices = window.speechSynthesis.getVoices();
+      const hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india'));
+      if (hindiVoice) {
+        utterance.voice = hindiVoice;
+      }
+      
+      utterance.onend = () => {
+        if (callback) callback();
+      };
+      utterance.onerror = (e) => {
+        console.error("SpeechSynthesis error: ", e);
+        if (callback) callback();
+      };
+      
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function typewriterFallback(text, wasError) {
+      if (wasError) {
+        addTransmissionFeed("SYSTEM", "ElevenLabs failed. Using Browser TTS voice fallback...");
+      } else {
+        addTransmissionFeed("SYSTEM", "Browser TTS Active (ElevenLabs key omitted).");
+      }
       
       // Visual indicator pulses
       startVisualizerPulse();
       
-      setTimeout(() => {
+      // Clean up text for TTS (remove [MOOD:X])
+      let cleanText = text.replace(/\[MOOD:\w+\]/gi, '').trim();
+      
+      speakWithBrowserTTS(cleanText, () => {
         isRJSpeaking = false;
         stopVisualizerPulse();
         duckMusic(false);
         updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
-      }, duration + 1000);
+      });
     }
 
     // SPECIAL DIALOGUE TRIGGERS
@@ -1979,6 +2011,9 @@ RULES:
         setTimeout(() => {
           playActiveSong();
         }, 15000);
+      } else {
+        // Fallback: if Gemini fails, start the music directly so it is not silent!
+        playActiveSong();
       }
     }
 
