@@ -1584,8 +1584,8 @@ RULES:
       osc.frequency.linearRampToValueAtTime(2200, audioCtx.currentTime + duration);
       
       gainNode.gain.setValueAtTime(0.0, audioCtx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime + 0.15);
-      gainNode.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + duration);
+      gainNode.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 0.15); // Softened sweep beep
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
       
       osc.connect(gainNode);
       gainNode.connect(audioCtx.destination);
@@ -1593,8 +1593,8 @@ RULES:
       osc.start();
       osc.stop(audioCtx.currentTime + duration);
       
-      // Combine with static
-      playStatic(duration, 0.25, 0.01);
+      // Combine with much softer static hiss
+      playStatic(duration, 0.03, 0.001);
     }
 
     function playJingle() {
