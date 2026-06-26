@@ -999,12 +999,13 @@
     /* HIDDEN YOUTUBE ELEMENT */
     #youtube-player {
       position: absolute;
-      top: -9999px;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0.01;
+      bottom: 10px;
+      right: 10px;
+      width: 200px;
+      height: 200px;
+      opacity: 0.001;
       pointer-events: none;
+      z-index: -1;
     }
   </style>
 </head>
@@ -1382,9 +1383,7 @@ RULES:
       }
 
       if (savedGemini) {
-        // Automatically hide modal and start radio if key exists
-        document.getElementById('setup-modal').style.display = 'none';
-        startIntroSequence();
+        showWelcomeBackState();
       }
       
       setupSpeechRecognition();
@@ -1404,6 +1403,41 @@ RULES:
         const minStr = currentMin < 10 ? '0' + currentMin : currentMin;
         document.getElementById('clock-display').innerText = `${currentHour < 10 ? '0' + currentHour : currentHour}:${minStr} PM`;
       }, 5000); // clock moves fast to simulate radio flow
+    }
+
+    function showWelcomeBackState() {
+      const modalContent = document.querySelector('.modal-content');
+      modalContent.innerHTML = `
+        <h2 class="modal-title retro-font glowing-text" style="color: #ffd700; margin-bottom: 25px;">Radio Sitara 91.5 FM</h2>
+        <p class="hindi-font" style="color: #ffd700; font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6;">
+          Sumit ji aur Neeta ji, 28 June 2005 ke Indore mein aapka swagat hai!<br>
+          <span style="font-size: 0.9rem; color: #a8816c;">(Anniversary Special Time Travel Radio)</span>
+        </p>
+        <button class="modal-btn retro-font" onclick="startWithSavedKeys()" style="padding: 15px 40px; font-size: 1.1rem; letter-spacing: 1px;">
+          📻 TUNE IN / चालू करें
+        </button>
+        <div style="margin-top: 25px;">
+          <a href="#" onclick="showKeySetup()" style="color: #ff9900; font-size: 0.8rem; text-decoration: none;">Change API Keys / सेटिंग्स बदलें</a>
+        </div>
+      `;
+    }
+
+    function startWithSavedKeys() {
+      GEMINI_API_KEY = localStorage.getItem('gemini_key');
+      ELEVENLABS_API_KEY = localStorage.getItem('eleven_key') || "";
+      VOICE_ID = localStorage.getItem('voice_id') || "jsCqWAovK2LkecY7zXl4";
+      
+      document.getElementById('setup-modal').style.display = 'none';
+      
+      // Initialize audio context and play starting sound
+      initAudio();
+      playJingle();
+      startIntroSequence();
+    }
+
+    function showKeySetup() {
+      localStorage.removeItem('gemini_key'); // clear and reload to show inputs
+      location.reload();
     }
 
     function saveSettings() {
@@ -1609,8 +1643,8 @@ RULES:
       const firstTrack = currentPlaylist[currentTrackIdx];
       
       ytPlayer = new YT.Player('youtube-player', {
-        height: '100',
-        width: '100',
+        height: '200',
+        width: '200',
         videoId: firstTrack.ytId,
         playerVars: {
           autoplay: 0,
@@ -1623,9 +1657,18 @@ RULES:
         },
         events: {
           'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
+          'onStateChange': onPlayerStateChange,
+          'onError': onPlayerError
         }
       });
+    }
+
+    function onPlayerError(event) {
+      console.error("YouTube Player Error: ", event.data);
+      addTransmissionFeed("SYSTEM", `Song "${currentPlaylist[currentTrackIdx].title}" restricted/geo-blocked (Error: ${event.data}). Skipping...`);
+      // Auto advance to next track
+      currentTrackIdx = (currentTrackIdx + 1) % currentPlaylist.length;
+      playActiveSong();
     }
 
     function onPlayerReady(event) {
