@@ -1345,7 +1345,7 @@
           <!-- EM84 MAGIC EYE VALVE INDICATOR & MIC -->
           <div class="visual-feedback-row">
             
-            <button class="mic-btn" id="mic-btn" onclick="toggleMicrophone()" title="Call DJ Vikram (Speech)">
+            <button class="mic-btn" id="mic-btn" onclick="toggleMicrophone()" title="Call RJ Sumeeta (Speech)">
               <svg class="mic-icon" viewBox="0 0 24 24">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
               </svg>
@@ -1412,7 +1412,7 @@
           </div>
 
           <div class="intercom-input-wrapper">
-            <input type="text" class="intercom-text-input hindi-font" id="text-input" placeholder="RJ Vikram se baat karein..." onkeypress="handleInputKeypress(event)">
+            <input type="text" class="intercom-text-input hindi-font" id="text-input" placeholder="RJ Sumeeta se baat karein..." onkeypress="handleInputKeypress(event)">
             <button class="intercom-send-btn led-font" onclick="sendTextInput()">Send</button>
           </div>
         </div>
@@ -1552,7 +1552,7 @@
     let currentTunedFreq = 91.5;
 
     const SYSTEM_PROMPT = `
-Tu "Dil Se DJ Vikram" hai — Radio Sitara 91.5 FM Indore ka sabse charismatic RJ.
+Tu "Dil Se RJ Sumeeta" hai — Radio Sitara 91.5 FM Indore ki sabse charismatic RJ.
 Aaj ki date hai 28 June 2005. Samay: shaam ke 7 baje.
 
 PERSONAL CONTEXT (teri family jaisi knowledge):
@@ -1570,7 +1570,7 @@ RULES:
 1. Sirf Hindi aur Hinglish mein baat kar — kabhi bhi full English sentences mat use karna. Natural local Indore style touch rakhna.
 2. Har link (RJ break) strictly 3-5 sentences ki honi chahiye. Bohat choti aur dynamic rakh.
 3. Ek random cheez zaroor dalo: ya toh Sumit ji ki car cleaning pe joke, ya Neeta ji ki cooking ki tarif, ya Indore ki reference (Rajwada, Sarafa), ya 2005 ki Bunty Aur Babli movie updates, ya street dogs feeding joke, ya neeta phone marathon joke.
-4. Response sirf DJ Vikram ka dialogue hona chahiye — no stage directions, no asterisks, no quotes.
+4. Response sirf RJ Sumeeta ka dialogue hona chahiye — no stage directions, no asterisks, no quotes.
 `;
 
     // PARODY COMMERCIALS
@@ -1786,7 +1786,7 @@ RULES:
                     // Load YouTube Frame
                     loadYouTubeAPI();
                     
-                    // Initial Welcome Speech from RJ Vikram
+                    // Initial Welcome Speech from RJ Sumeeta
                     setTimeout(() => {
                       triggerRJWelcome();
                     }, 2500);
@@ -2394,7 +2394,7 @@ RULES:
         return textResponse;
       } catch (err) {
         console.error("Gemini API Error: ", err);
-        addTransmissionFeed("SYSTEM ERROR", "Unable to establish contact with RJ Vikram's station.");
+        addTransmissionFeed("SYSTEM ERROR", "Unable to establish contact with RJ Sumeeta's station.");
         return null;
       }
     }
@@ -2407,7 +2407,7 @@ RULES:
       isRJSpeaking = true;
       duckMusic(true);
       updateStatus("🔴 ON AIR", "active-on-air");
-      updateLEDMarquee("RJ Vikram is speaking live...");
+      updateLEDMarquee("RJ Sumeeta is speaking live...");
       
       ELEVENLABS_API_KEY = localStorage.getItem('eleven_key') || "";
       VOICE_ID = localStorage.getItem('voice_id') || "jsCqWAovK2LkecY7zXl4";
@@ -2415,7 +2415,7 @@ RULES:
       // Remove any tags like [MOOD:X] from voice rendering
       let cleanText = text.replace(/\[MOOD:\w+\]/gi, '').trim();
       
-      addTransmissionFeed("DJ VIKRAM", cleanText);
+      addTransmissionFeed("RJ SUMEETA", cleanText);
 
       // Check if TTS is enabled and API Key is configured
       if (ttsEnabled && ELEVENLABS_API_KEY) {
@@ -2552,7 +2552,7 @@ RULES:
 
     async function triggerRJSongLink() {
       const nextSong = currentPlaylist[currentTrackIdx];
-      const response = await callGemini(`[SYSTEM: The previous song ended. RJ Vikram does a warm 2005 link, cracks a joke about Sumit's car obsession or Neeta's phone marathon, and introduces the next song "${nextSong.title}" from the film "${nextSong.film}".]`);
+      const response = await callGemini(`[SYSTEM: The previous song ended. RJ Sumeeta does a warm 2005 link, cracks a joke about Sumit's car obsession or Neeta's phone marathon, and introduces the next song "${nextSong.title}" from the film "${nextSong.film}".]`);
       if (response) {
         playSongAfterSpeech = true; // start music automatically after link finishes
         await speakAsRJ(response);
@@ -2759,7 +2759,7 @@ RULES:
       const rjPrompt = `
         Studio mein call aayi hai. Listener ne dedication mein kaha: "${userMessage}"
         
-        Respond as DJ Vikram — directly address them in 3-4 sentences Hindi/Hinglish.
+        Respond as RJ Sumeeta — directly address them in 3-4 sentences Hindi/Hinglish.
         If they request a song type (romantic/sad/fast/dance/filmi), end your response with:
         [MOOD:romantic] or [MOOD:sad] or [MOOD:dance] so the app can change the queue.
         If they ask who's better cook or driver, be funny and diplomatic — never pick a side!
@@ -2779,7 +2779,7 @@ RULES:
       else if (responseText.includes("[MOOD:sad]")) matchedMood = "sad";
       
       if (matchedMood) {
-        addTransmissionFeed("SYSTEM", `RJ Vikram changed broadcast mood to: ${matchedMood.toUpperCase()}`);
+        addTransmissionFeed("SYSTEM", `RJ Sumeeta changed broadcast mood to: ${matchedMood.toUpperCase()}`);
         reorderPlaylistForMood(matchedMood);
         playSongAfterSpeech = true; // wait for RJ call-in speech to finish before starting new song!
       }
