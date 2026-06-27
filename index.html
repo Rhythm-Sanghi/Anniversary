@@ -1325,6 +1325,13 @@
     let NewsSegmentTimer = null;
     let clockTimer = null;
     let visualizerPulseTimer = null;
+    
+    // State machine & error loop controllers
+    let consecutiveErrors = 0;
+    let rjWelcomeTimeout = null;
+    let rjSongLinkTimeout = null;
+    let commercialTimeout = null;
+    let playSongAfterSpeech = false;
 
     const SYSTEM_PROMPT = `
 Tu "Dil Se DJ Vikram" hai — Radio Sitara 91.5 FM Indore ka sabse charismatic RJ.
@@ -1703,6 +1710,17 @@ RULES:
     function onPlayerError(event) {
       console.error("YouTube Player Error: ", event.data);
       addTransmissionFeed("SYSTEM", `Song "${currentPlaylist[currentTrackIdx].title}" restricted/geo-blocked (Error: ${event.data}). Skipping...`);
+      
+      consecutiveErrors++;
+      if (consecutiveErrors >= currentPlaylist.length) {
+        // Stop the loop to prevent freezing/looping static
+        updateStatus("STREAM ERROR: RUN ON WEB SERVER", "active-tuning");
+        updateLEDMarquee("CRITICAL: ALL CHANNELS BLOCKED");
+        addTransmissionFeed("CRITICAL ERROR", "All YouTube streams are blocked by your browser. This occurs when running index.html directly via the file:// protocol. Please run the folder through a local HTTP server (e.g. python -m http.server 8000) or deploy to GitHub Pages to enable music streaming!");
+        consecutiveErrors = 0; // reset
+        return;
+      }
+      
       // Auto advance to next track
       currentTrackIdx = (currentTrackIdx + 1) % currentPlaylist.length;
       playActiveSong();
@@ -1720,9 +1738,12 @@ RULES:
       }
       
       // Update UI matching Play/Pause states
-      if (event.data === YT.PlayerState.PLAYING && !isRJSpeaking) {
-        updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
-        startVisualizerPulse();
+      if (event.data === YT.PlayerState.PLAYING) {
+        consecutiveErrors = 0; // Reset consecutive errors on successful play!
+        if (!isRJSpeaking) {
+          updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
+          startVisualizerPulse();
+        }
       } else if (event.data === YT.PlayerState.PAUSED) {
         stopVisualizerPulse();
       }
@@ -1730,6 +1751,11 @@ RULES:
 
     function playActiveSong() {
       if (!ytPlayer) return;
+      
+      // Clear any pending transitions/timeouts to avoid race conditions
+      if (rjWelcomeTimeout) clearTimeout(rjWelcomeTimeout);
+      if (rjSongLinkTimeout) clearTimeout(rjSongLinkTimeout);
+      if (commercialTimeout) clearTimeout(commercialTimeout);
       
       const track = currentPlaylist[currentTrackIdx];
       updateLEDMarquee(`Tuning 2005 FM scale to ${track.freq} MHz - "${track.title}" from "${track.film}"`);
@@ -1756,13 +1782,11 @@ RULES:
       
       const decideBreak = Math.random();
       if (decideBreak < 0.4) {
-        // Play Commercial
+        // Set flag to auto-trigger the next song *after* the commercial ends
+        playSongAfterSpeech = true;
         playCommercial();
-        setTimeout(() => {
-          playActiveSong();
-        }, 12000);
       } else {
-        // Trigger Gemini link
+        // Trigger Gemini link (which handles playSongAfterSpeech flag internally)
         triggerRJSongLink();
       }
     }
@@ -2037,9 +2061,15 @@ RULES:
           rjSpeechAudio.onended = () => {
             isRJSpeaking = false;
             stopVisualizerPulse();
-            duckMusic(false);
             URL.revokeObjectURL(audioUrl);
-            updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
+            
+            if (playSongAfterSpeech) {
+              playSongAfterSpeech = false;
+              playActiveSong();
+            } else {
+              duckMusic(false);
+              updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
+            }
           };
           
         } catch (err) {
@@ -2102,8 +2132,14 @@ RULES:
       speakWithBrowserTTS(cleanText, () => {
         isRJSpeaking = false;
         stopVisualizerPulse();
-        duckMusic(false);
-        updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
+        
+        if (playSongAfterSpeech) {
+          playSongAfterSpeech = false;
+          playActiveSong();
+        } else {
+          duckMusic(false);
+          updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
+        }
       });
     }
 
@@ -2111,10 +2147,8 @@ RULES:
     async function triggerRJWelcome() {
       const response = await callGemini("[SYSTEM: Radio boot completed. Announce the intro: welcome Sumit and Neeta ji to Indore's Radio Sitara 91.5 FM. Congratulate them on their first anniversary today: June 28, 2005. Mention Indore weather and start the broadcast.]");
       if (response) {
+        playSongAfterSpeech = true; // start music automatically after welcome finishes
         await speakAsRJ(response);
-        setTimeout(() => {
-          playActiveSong();
-        }, 15000);
       } else {
         // Fallback: if Gemini fails, start the music directly so it is not silent!
         playActiveSong();
@@ -2125,13 +2159,8 @@ RULES:
       const nextSong = currentPlaylist[currentTrackIdx];
       const response = await callGemini(`[SYSTEM: The previous song ended. RJ Vikram does a warm 2005 link, cracks a joke about Sumit's car obsession or Neeta's phone marathon, and introduces the next song "${nextSong.title}" from the film "${nextSong.film}".]`);
       if (response) {
+        playSongAfterSpeech = true; // start music automatically after link finishes
         await speakAsRJ(response);
-        // Wait till speech completes to start song
-        let speakTime = response.length * 60;
-        if (ttsEnabled && ELEVENLABS_API_KEY) speakTime = 12000; // rough default for audio
-        setTimeout(() => {
-          playActiveSong();
-        }, speakTime);
       } else {
         playActiveSong();
       }
@@ -2245,19 +2274,21 @@ RULES:
       
       if (matchedMood) {
         addTransmissionFeed("SYSTEM", `RJ Vikram changed broadcast mood to: ${matchedMood.toUpperCase()}`);
-        triggerMood(matchedMood);
+        reorderPlaylistForMood(matchedMood);
+        playSongAfterSpeech = true; // wait for RJ call-in speech to finish before starting new song!
       }
     }
 
-    // Mood playlist reordering logic
-    function triggerMood(mood) {
-      // Reorder currentPlaylist based on mood matching
+    function reorderPlaylistForMood(mood) {
       const matchingSongs = playlist.filter(s => s.mood === mood);
       const remainingSongs = playlist.filter(s => s.mood !== mood);
-      
       currentPlaylist = [...matchingSongs, ...remainingSongs];
       currentTrackIdx = 0;
-      
+    }
+
+    // Mood playlist reordering logic (Manual click)
+    function triggerMood(mood) {
+      reorderPlaylistForMood(mood);
       addTransmissionFeed("STATION ROTATION", `Tuning scale rearranged. Up next: ${mood.toUpperCase()} playlist hits.`);
       playActiveSong();
     }
