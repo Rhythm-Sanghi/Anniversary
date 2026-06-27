@@ -732,6 +732,173 @@
       justify-content: center;
     }
 
+    /* CUSTOM ENGRAVED BRASS PLAQUE */
+    .brass-engraving-plaque {
+      background: linear-gradient(135deg, #ffd700 0%, #fff5cc 30%, #cca300 60%, #ffe680 80%, #997a00 100%);
+      border: 2px solid #574400;
+      border-radius: 4px;
+      color: #1b0a01;
+      font-size: 0.7rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-align: center;
+      padding: 6px 14px;
+      margin: 5px auto 20px auto;
+      width: fit-content;
+      max-width: 95%;
+      box-shadow: 
+        1px 2px 4px rgba(0,0,0,0.6),
+        inset 0 1px 1px rgba(255,255,255,0.8),
+        inset 0 -1px 2px rgba(0,0,0,0.4);
+      cursor: pointer;
+      user-select: none;
+      font-family: 'Share Tech Mono', monospace;
+      position: relative;
+      transition: all 0.3s;
+      z-index: 20;
+    }
+    .brass-engraving-plaque:hover {
+      box-shadow: 
+        0 0 12px rgba(255,215,0,0.8),
+        1px 3px 6px rgba(0,0,0,0.8);
+      transform: translateY(-1px);
+    }
+    .brass-engraving-plaque::before, .brass-engraving-plaque::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #443400;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .brass-engraving-plaque::before { left: 5px; }
+    .brass-engraving-plaque::after { right: 5px; }
+
+    /* MECHANICAL SLIDE-OUT WEDDING DRAWER */
+    .wedding-drawer {
+      width: 100%;
+      background: linear-gradient(180deg, #1b0c03 0%, #2e1708 100%);
+      border: 8px solid #2a1103;
+      border-top: none;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 
+        0 25px 50px rgba(0,0,0,0.9),
+        inset 0 10px 20px rgba(0,0,0,0.95);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+      position: relative;
+      z-index: 5;
+      margin-top: -15px; /* overlay behind cabinet slightly */
+    }
+    .wedding-drawer.open {
+      max-height: 480px; /* fully expand */
+    }
+
+    .drawer-handle {
+      width: 80px;
+      height: 12px;
+      background: var(--brass-gold);
+      border: 2px solid #574400;
+      border-radius: 0 0 8px 8px;
+      margin: 0 auto;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .drawer-content {
+      padding: 25px;
+    }
+
+    .drawer-heading {
+      color: #ffd700;
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .drawer-body-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .drawer-body-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .parchment-letter {
+      background: #fbf6e3;
+      border: 1px solid #e5d8b3;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      padding: 20px;
+      border-radius: 8px;
+      color: #3b2211;
+      font-family: 'Playfair Display', serif;
+      line-height: 1.5;
+      position: relative;
+    }
+    .parchment-letter::before {
+      content: '';
+      position: absolute;
+      top: 5px; left: 5px; right: 5px; bottom: 5px;
+      border: 1px dashed rgba(124, 70, 35, 0.2);
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .letter-date {
+      display: block;
+      font-size: 0.75rem;
+      font-style: italic;
+      color: #8c583a;
+      margin-bottom: 10px;
+      text-align: right;
+    }
+
+    .letter-text {
+      font-size: 0.88rem;
+    }
+
+    .wedding-illustration-box {
+      background: #0f0703;
+      border: 3px solid #3e210d;
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.95);
+      height: 100%;
+    }
+
+    .wedding-svg {
+      width: 120px;
+      height: 120px;
+      filter: drop-shadow(0 0 8px rgba(255, 34, 0, 0.4));
+    }
+
+    .wedding-names {
+      color: #ffd700;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      font-weight: bold;
+      text-shadow: 0 0 5px #ffd700;
+    }
+    .wedding-venue {
+      color: #ff5500;
+      font-size: 0.65rem;
+      margin-top: 5px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
     /* BOTTOM ROW: INTERCOM / DEDICATION & PARCHMENT FEED */
     .panel-bottom-grid {
       display: grid;
@@ -1085,6 +1252,11 @@
       <div class="cabinet-screw screw-bl"></div>
       <div class="cabinet-screw screw-br"></div>
       
+      <!-- Custom Engraved Brass Nameplate -->
+      <div class="brass-engraving-plaque" onclick="toggleWeddingDrawer()" title="Click to slide open wedding memories/card">
+        ✨ CUSTOM BUILT FOR SUMIT & NEETA — June 28, 2005 — INDORE ✨
+      </div>
+
       <!-- HEADER BRANDING -->
       <div class="radio-header">
         <div class="brand-name retro-font">Sitara Radio</div>
@@ -1225,7 +1397,7 @@
               <span class="label-primary">3</span>
               <span class="label-sub">SAD</span>
             </button>
-            <button class="dialer-btn" onclick="playJingle()">
+            <button class="dialer-btn" onclick="playAIRJingle()">
               <span class="label-primary">★</span>
               <span class="label-sub">JINGLE</span>
             </button>
@@ -1258,6 +1430,46 @@
 
       </div>
 
+    </div>
+
+    <!-- MECHANICAL SLIDE-OUT WEDDING DRAWER -->
+    <div id="wedding-drawer" class="wedding-drawer">
+      <div class="drawer-handle" onclick="toggleWeddingDrawer()"></div>
+      <div class="drawer-content">
+        <h3 class="retro-font drawer-heading">21 Beautiful Years / २१ साल का हसीन सफर</h3>
+        
+        <div class="drawer-body-grid">
+          <!-- Custom Greeting Letter -->
+          <div class="parchment-letter">
+            <span class="letter-date">Indore — June 28, 2026</span>
+            <p class="hindi-font letter-text">
+              Dear Mummy & Papa (Neeta & Sumit),<br><br>
+              Aapki 21st Shaadi ki Saalgirah par yeh chota sa tohfa. 28 June 2005 ko Indore ke Malhar Garden se shuru hua yeh safar aaj bhi utna hi pyara aur bemisaal hai. Sumit ji ki car cleaning se lekar Neeta ji ke haath ke lajawab khane tak, aur Kamla Bai ke naye dramas se lekar Mohalle ke kutton ko biscuit inspect karne tak — aap dono ne is ghar ko sach mein jannat banaya hai.<br><br>
+              Thank you for teaching us love, patience, and endless laughter. Happy 21st Wedding Anniversary!<br><br>
+              With infinite love,<br>
+              Your Children ❤️
+            </p>
+          </div>
+
+          <!-- Retro Illustration Box -->
+          <div class="wedding-illustration-box">
+            <svg viewBox="0 0 100 100" class="wedding-svg">
+              <!-- Nested Hearts -->
+              <path d="M 50,35 C 50,35 38,20 25,35 C 12,50 50,85 50,85 C 50,85 88,50 75,35 C 62,20 50,35 50,35 Z" fill="rgba(191,16,16,0.15)" stroke="#ff2200" stroke-width="2" />
+              <path d="M 42,42 C 42,42 33,30 23,42 C 12,54 42,80 42,80 C 42,80 72,54 61,42 C 51,30 42,42 42,42 Z" fill="rgba(255,215,0,0.15)" stroke="#ffd700" stroke-width="1.5" />
+              <!-- Rings Interlocked -->
+              <circle cx="44" cy="72" r="7" fill="none" stroke="#ffd700" stroke-width="1.5" />
+              <circle cx="56" cy="72" r="7" fill="none" stroke="#ffd700" stroke-width="1.5" />
+              <!-- Small sparkles -->
+              <line x1="25" y1="20" x2="28" y2="23" stroke="#ffd700" stroke-width="1" />
+              <line x1="75" y1="20" x2="72" y2="23" stroke="#ffd700" stroke-width="1" />
+              <line x1="50" y1="12" x2="50" y2="16" stroke="#ff2200" stroke-width="1.5" />
+            </svg>
+            <div class="wedding-names led-font">SUMIT ❤️ NEETA</div>
+            <div class="wedding-venue led-font">MALHAR GARDEN, INDORE</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- LOWER CONTROLS -->
@@ -1407,6 +1619,20 @@ RULES:
       }
     }
 
+    // ASYNC BROWSER VOICE PRELOADER
+    let browserVoices = [];
+    function loadBrowserVoices() {
+      if ('speechSynthesis' in window) {
+        browserVoices = window.speechSynthesis.getVoices();
+      }
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        loadBrowserVoices();
+      };
+      loadBrowserVoices();
+    }
+
     // INITIALIZATION & SETTINGS
     window.onload = () => {
       createParticles();
@@ -1475,7 +1701,7 @@ RULES:
       
       // Initialize audio context and play starting sound
       initAudio();
-      playJingle();
+      playAIRJingle();
       startIntroSequence();
     }
 
@@ -1506,7 +1732,7 @@ RULES:
       
       // Trigger Web Audio activation
       initAudio();
-      playJingle();
+      playAIRJingle();
 
       startIntroSequence();
     }
@@ -2096,10 +2322,9 @@ RULES:
       utterance.pitch = 1.0;
       
       // Attempt to load Hindi voice, prioritizing high-quality Google voice if on Chrome
-      const voices = window.speechSynthesis.getVoices();
-      let hindiVoice = voices.find(v => (v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india')) && v.name.toLowerCase().includes('google'));
+      let hindiVoice = browserVoices.find(v => (v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india')) && v.name.toLowerCase().includes('google'));
       if (!hindiVoice) {
-        hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india'));
+        hindiVoice = browserVoices.find(v => v.lang.toLowerCase().includes('hi') || v.lang.toLowerCase().includes('india'));
       }
       
       if (hindiVoice) {
@@ -2186,6 +2411,117 @@ RULES:
       const randomAd = commercials[Math.floor(Math.random() * commercials.length)];
       const scriptText = `[COMMERCIAL BREAK] ${randomAd.script}`;
       await speakAsRJ(scriptText);
+    }
+
+    // PROCEDURAL AKASHVANI (ALL INDIA RADIO) JINGLE
+    function playAIRJingle() {
+      initAudio();
+      const now = audioCtx.currentTime;
+      
+      // 1. TAMBURA DRONE (Very soft background note)
+      const droneOsc1 = audioCtx.createOscillator();
+      const droneOsc2 = audioCtx.createOscillator();
+      const droneGain = audioCtx.createGain();
+      const droneFilter = audioCtx.createBiquadFilter();
+      
+      droneOsc1.type = 'sawtooth';
+      droneOsc1.frequency.value = 110.00; // A2
+      
+      droneOsc2.type = 'triangle';
+      droneOsc2.frequency.value = 165.00; // E3 (fifth)
+      
+      droneGain.gain.setValueAtTime(0, now);
+      droneGain.gain.linearRampToValueAtTime(0.04, now + 1.0); // very soft
+      droneGain.gain.setValueAtTime(0.04, now + 9.5);
+      droneGain.gain.exponentialRampToValueAtTime(0.0001, now + 10.5);
+      
+      droneFilter.type = 'lowpass';
+      droneFilter.frequency.value = 300; // filter out harsh buzz
+      
+      droneOsc1.connect(droneGain);
+      droneOsc2.connect(droneGain);
+      droneGain.connect(droneFilter);
+      droneFilter.connect(audioCtx.destination);
+      
+      droneOsc1.start(now);
+      droneOsc2.start(now);
+      droneOsc1.stop(now + 10.5);
+      droneOsc2.stop(now + 10.5);
+      
+      // 2. SOLO INSTRUMENT (Violin theme notes)
+      const notes = [
+        { freq: 220.00, duration: 1.2, start: 0.5 },  // A3
+        { freq: 261.63, duration: 0.6, start: 1.7 },  // C4
+        { freq: 293.66, duration: 1.5, start: 2.3 },  // D4
+        { freq: 329.63, duration: 0.8, start: 3.8 },  // E4
+        { freq: 293.66, duration: 0.6, start: 4.6 },  // D4
+        { freq: 261.63, duration: 0.6, start: 5.2 },  // C4
+        { freq: 220.00, duration: 1.2, start: 5.8 },  // A3
+        { freq: 261.63, duration: 0.6, start: 7.0 },  // C4
+        { freq: 293.66, duration: 0.6, start: 7.6 },  // D4
+        { freq: 220.00, duration: 1.8, start: 8.2 }   // A3
+      ];
+      
+      notes.forEach(note => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        const filterNode = audioCtx.createBiquadFilter();
+        const vibrato = audioCtx.createOscillator();
+        const vibratoGain = audioCtx.createGain();
+        
+        osc.type = 'sawtooth'; 
+        osc.frequency.setValueAtTime(note.freq, now + note.start);
+        
+        vibrato.frequency.value = 6; // 6Hz vibrato
+        vibratoGain.gain.value = 3; // +/- 3Hz vibrato depth
+        
+        vibrato.connect(vibratoGain);
+        vibratoGain.connect(osc.frequency);
+        
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(500, now + note.start);
+        filterNode.frequency.exponentialRampToValueAtTime(800, now + note.start + 0.1);
+        filterNode.frequency.linearRampToValueAtTime(450, now + note.start + note.duration);
+        
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.setValueAtTime(0, now + note.start);
+        gainNode.gain.linearRampToValueAtTime(0.08, now + note.start + 0.15); // soft violin level
+        gainNode.gain.setValueAtTime(0.08, now + note.start + note.duration - 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + note.start + note.duration);
+        
+        osc.connect(gainNode);
+        gainNode.connect(filterNode);
+        filterNode.connect(audioCtx.destination);
+        
+        vibrato.start(now + note.start);
+        osc.start(now + note.start);
+        vibrato.stop(now + note.start + note.duration);
+        osc.stop(now + note.start + note.duration);
+      });
+      
+      addTransmissionFeed("AKASHVANI TUNE", "Iconic 1936 All India Radio signature melody playing...");
+    }
+
+    function toggleWeddingDrawer() {
+      const drawer = document.getElementById('wedding-drawer');
+      if (!drawer) return;
+      drawer.classList.toggle('open');
+      
+      initAudio();
+      const now = audioCtx.currentTime;
+      playStatic(0.4, 0.003, 0.0001); // mechanical slide hiss
+      
+      // Mechanical switch click
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = 150;
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(now + 0.12);
     }
 
     // CALL-IN STUDIO LOGIC (Web Speech API)
