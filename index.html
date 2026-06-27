@@ -1544,6 +1544,12 @@
     let rjSongLinkTimeout = null;
     let commercialTimeout = null;
     let playSongAfterSpeech = false;
+    
+    // Analog tuning sweep variables
+    let isTuningDragging = false;
+    let tuningStaticSource = null;
+    let tuningStaticGainNode = null;
+    let currentTunedFreq = 91.5;
 
     const SYSTEM_PROMPT = `
 Tu "Dil Se DJ Vikram" hai — Radio Sitara 91.5 FM Indore ka sabse charismatic RJ.
@@ -1990,6 +1996,13 @@ RULES:
       // Position frequency needle
       positionTunerNeedle(track.freq);
       
+      // Sync the tuner knob rotation angle when a song starts automatically!
+      const targetAngle = ((track.freq - 88.0) / 20) * 270 - 135;
+      const tunerKnob = document.getElementById('tuner-knob');
+      if (tunerKnob) {
+        tunerKnob.style.transform = `rotate(${targetAngle}deg)`;
+      }
+      
       // Play Static & sweep
       triggerTuningSweepEffect();
       
@@ -2063,18 +2076,21 @@ RULES:
       });
 
       const tunerKnob = document.getElementById('tuner-knob');
-      let lastIntStep = 0;
       setupDragRotation(tunerKnob, (angle) => {
-        // Map angle to cycle playlist tracks (discrete steps)
-        let step = Math.floor((angle + 135) / (270 / currentPlaylist.length));
-        if (step < 0) step = 0;
-        if (step >= currentPlaylist.length) step = currentPlaylist.length - 1;
+        // Calculate continuous frequency: -135deg to +135deg maps to 88.0 to 108.0
+        let freq = 88.0 + ((angle + 135) / 270) * (108.0 - 88.0);
+        if (freq < 88.0) freq = 88.0;
+        if (freq > 108.0) freq = 108.0;
         
-        if (step !== lastIntStep) {
-          lastIntStep = step;
-          currentTrackIdx = step;
-          playActiveSong();
-        }
+        currentTunedFreq = freq;
+        positionTunerNeedle(freq);
+        
+        // Update static and music volume blend
+        updateTuningSignal(freq);
+        
+        // Update LED marquee
+        updateLEDMarquee(`SCANNING BAND: ${freq.toFixed(1)} MHz`);
+        updateStatus(`📻 TUNING STATION...`, "active-tuning");
       });
     }
 
@@ -2100,8 +2116,24 @@ RULES:
         rect = knob.getBoundingClientRect();
         centerX = rect.left + rect.width / 2;
         centerY = rect.top + rect.height / 2;
+        
+        // Parse the current transform rotation from style to sync starting angle
+        const transform = knob.style.transform;
+        let currentAngle = 0;
+        if (transform) {
+          const match = transform.match(/rotate\(([^)]+)deg\)/);
+          if (match) {
+            currentAngle = parseFloat(match[1]);
+          }
+        }
+        currentRotation = currentAngle;
+        
         startAngle = getAngle(e) - currentRotation;
         e.preventDefault();
+        
+        if (knob.id === 'tuner-knob') {
+          startContinuousStatic();
+        }
       }
       
       function doDrag(e) {
@@ -2118,7 +2150,45 @@ RULES:
       }
       
       function stopDrag() {
-        isDragging = false;
+        if (isDragging) {
+          isDragging = false;
+          
+          if (knob.id === 'tuner-knob') {
+            stopContinuousStatic();
+            
+            // Snap to nearest station frequency
+            let nearest = currentPlaylist[0];
+            let minDistance = Math.abs(currentTunedFreq - nearest.freq);
+            let nearestIdx = 0;
+            
+            for (let i = 1; i < currentPlaylist.length; i++) {
+              let dist = Math.abs(currentTunedFreq - currentPlaylist[i].freq);
+              if (dist < minDistance) {
+                minDistance = dist;
+                nearest = currentPlaylist[i];
+                nearestIdx = i;
+              }
+            }
+            
+            // Snap dial needle position
+            positionTunerNeedle(nearest.freq);
+            
+            // Lock knob rotation at nearest frequency angle
+            let targetAngle = ((nearest.freq - 88.0) / 20) * 270 - 135;
+            currentRotation = targetAngle;
+            knob.style.transform = `rotate(${currentRotation}deg)`;
+            
+            if (nearestIdx !== currentTrackIdx) {
+              currentTrackIdx = nearestIdx;
+              playActiveSong();
+            } else {
+              if (ytPlayer && typeof ytPlayer.setVolume === 'function') {
+                ytPlayer.setVolume(currentVolume);
+                updateStatus(`🎵 NOW PLAYING: ${nearest.title}`, "active-playing");
+              }
+            }
+          }
+        }
       }
       
       knob.addEventListener('mousedown', startDrag);
@@ -2135,6 +2205,105 @@ RULES:
       const maxFreq = 108;
       const percent = ((freq - minFreq) / (maxFreq - minFreq)) * 100;
       document.getElementById('frequency-needle').style.left = `${percent}%`;
+    }
+
+    // CONTINUOUS WHITE NOISE STATIC FOR DIAL SCANNING
+    function startContinuousStatic() {
+      initAudio();
+      if (isTuningDragging) return;
+      isTuningDragging = true;
+      
+      const bufferSize = audioCtx.sampleRate * 2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      
+      tuningStaticSource = audioCtx.createBufferSource();
+      tuningStaticSource.buffer = buffer;
+      tuningStaticSource.loop = true;
+      
+      tuningStaticGainNode = audioCtx.createGain();
+      tuningStaticGainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime); // start silent
+      
+      tuningStaticSource.connect(tuningStaticGainNode);
+      tuningStaticGainNode.connect(audioCtx.destination);
+      
+      tuningStaticSource.start(0);
+    }
+
+    function stopContinuousStatic() {
+      if (!isTuningDragging) return;
+      isTuningDragging = false;
+      
+      if (tuningStaticGainNode) {
+        const now = audioCtx.currentTime;
+        tuningStaticGainNode.gain.setValueAtTime(tuningStaticGainNode.gain.value, now);
+        tuningStaticGainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      }
+      
+      setTimeout(() => {
+        if (!isTuningDragging && tuningStaticSource) {
+          try {
+            tuningStaticSource.stop();
+          } catch(e) {}
+          tuningStaticSource = null;
+          tuningStaticGainNode = null;
+        }
+      }, 400);
+    }
+
+    function updateTuningSignal(freq) {
+      if (!ytPlayer || typeof ytPlayer.setVolume !== 'function') return;
+      
+      // Locate closest station
+      let nearest = currentPlaylist[0];
+      let minDistance = Math.abs(freq - nearest.freq);
+      let nearestIdx = 0;
+      
+      for (let i = 1; i < currentPlaylist.length; i++) {
+        let dist = Math.abs(freq - currentPlaylist[i].freq);
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearest = currentPlaylist[i];
+          nearestIdx = i;
+        }
+      }
+      
+      const tolerance = 0.6; // MHz signal width
+      let musicVolFactor = 0;
+      let staticVolFactor = 1;
+      
+      if (minDistance < 0.05) {
+        // Clear station lock
+        musicVolFactor = 1.0;
+        staticVolFactor = 0;
+      } else if (minDistance < tolerance) {
+        // Transition fuzz
+        musicVolFactor = 1 - (minDistance / tolerance);
+        musicVolFactor = Math.pow(musicVolFactor, 2); // soft curve
+        staticVolFactor = minDistance / tolerance;
+      } else {
+        // Empty airwaves
+        musicVolFactor = 0;
+        staticVolFactor = 1.0;
+      }
+      
+      // Limit maximum static volume to prevent discomfort
+      const maxStaticVolume = 0.006; 
+      let targetStaticVolume = staticVolFactor * maxStaticVolume;
+      let targetMusicVolume = Math.round(musicVolFactor * currentVolume);
+      
+      if (tuningStaticGainNode) {
+        tuningStaticGainNode.gain.value = targetStaticVolume;
+      }
+      
+      if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+        ytPlayer.setVolume(targetMusicVolume);
+      }
+      
+      return { nearestTrack: nearest, nearestIdx: nearestIdx };
     }
 
     // SPEAKER PULSING VISUALIZER (WITH MAGIC EYE DRIVER)
