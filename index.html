@@ -1697,7 +1697,8 @@ RULES:
           fs: 0,
           rel: 0,
           showinfo: 0,
-          modestbranding: 1
+          modestbranding: 1,
+          origin: window.location.origin
         },
         events: {
           'onReady': onPlayerReady,
@@ -1797,8 +1798,8 @@ RULES:
       
       if (duckInterval) clearInterval(duckInterval);
       
-      let targetVolume = shouldDuck ? 15 : currentVolume;
-      let startVolume = ytPlayer.getVolume();
+      let targetVolume = shouldDuck ? 5 : currentVolume;
+      let startVolume = (typeof ytPlayer.getVolume === 'function') ? ytPlayer.getVolume() : currentVolume;
       let steps = 10;
       let stepTime = shouldDuck ? 80 : 150; // Duck over 800ms, ramp back up over 1500ms
       let volumeDelta = (targetVolume - startVolume) / steps;
