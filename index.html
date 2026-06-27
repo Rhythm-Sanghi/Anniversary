@@ -26,6 +26,7 @@
       --brass-gold: linear-gradient(135deg, #ffd700 0%, #fff099 25%, #cca300 50%, #ffe680 75%, #806600 100%);
       --magic-eye-green: #00ff66;
       --led-red: #ff2200;
+      --led-green: #00ff44;
       --led-blue: #0088ff;
       --dial-ivory: #faf4e8;
     }
@@ -219,6 +220,7 @@
       justify-content: center;
       padding: 30px;
       text-align: center;
+      transition: opacity 1s ease-out;
     }
 
     .intro-text-line {
@@ -795,7 +797,7 @@
       margin-top: -15px; /* overlay behind cabinet slightly */
     }
     .wedding-drawer.open {
-      max-height: 480px; /* fully expand */
+      max-height: 620px; /* fully expand */
     }
 
     .drawer-handle {
@@ -1194,6 +1196,107 @@
       pointer-events: none;
       z-index: -1;
     }
+
+    /* VALVE WARM-UP GLOW ANIMATION (tube radio boot) */
+    @keyframes valveWarmUp {
+      0%   { background: radial-gradient(circle at center, #5a3010 0%, #2a1006 100%); box-shadow: inset 0 12px 25px rgba(0,0,0,0.95), 0 0 0 rgba(255,100,0,0); }
+      25%  { background: radial-gradient(circle at center, #c07030 0%, #7a3c0c 100%); box-shadow: inset 0 8px 20px rgba(0,0,0,0.7), 0 0 20px rgba(255,130,0,0.35); }
+      60%  { background: radial-gradient(circle at center, #f5d898 0%, #e0c070 100%); box-shadow: inset 0 10px 22px rgba(0,0,0,0.75), 0 0 10px rgba(255,200,80,0.2); }
+      100% { background: radial-gradient(circle at center, #faf4e8 0%, #ecdcb9 100%); box-shadow: inset 0 12px 25px rgba(0,0,0,0.8), 0 4px 10px rgba(255,255,255,0.05); }
+    }
+    .tuner-window.warming-up {
+      animation: valveWarmUp 3.5s ease-out forwards;
+    }
+
+    /* PARCHMENT LETTER & ILLUSTRATION ANIMATED REVEAL */
+    @keyframes parchmentReveal {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .wedding-drawer.open .parchment-letter {
+      animation: parchmentReveal 0.75s ease-out 0.45s both;
+    }
+    .wedding-drawer.open .wedding-illustration-box {
+      animation: parchmentReveal 0.75s ease-out 0.65s both;
+    }
+
+    /* PLAY/PAUSE BUTTON */
+    .play-pause-btn {
+      background: radial-gradient(circle, var(--cream-bakelite) 0%, var(--cream-dim) 100%);
+      border: 3px solid #2e1a0d;
+      border-radius: 8px;
+      padding: 9px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.5);
+      transition: all 0.1s;
+      width: 100%;
+    }
+    .play-pause-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .play-pause-btn .pp-icon {
+      font-size: 1rem;
+    }
+    .play-pause-btn .pp-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #3e1f0c;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* MOBILE COMPACT LAYOUT */
+    @media (max-width: 480px) {
+      .radio-cabinet {
+        padding: 18px;
+        border-width: 8px;
+      }
+      .knobs-row {
+        gap: 14px;
+      }
+      .rotary-knob {
+        width: 48px;
+        height: 48px;
+      }
+      .controls-panel {
+        padding: 12px;
+        height: auto;
+        min-height: 200px;
+      }
+      .dialer-buttons-grid {
+        gap: 6px;
+      }
+      .dialer-btn {
+        padding: 6px 4px;
+      }
+      .dialer-btn span.label-primary {
+        font-size: 0.65rem;
+      }
+      .dialer-btn span.label-sub {
+        font-size: 0.45rem;
+      }
+      .drawer-body-grid {
+        gap: 12px;
+      }
+      .brass-engraving-plaque {
+        font-size: 0.55rem;
+        letter-spacing: 0.8px;
+        padding: 5px 10px;
+      }
+      .brand-name {
+        font-size: 0.9rem;
+      }
+      .intercom-text-input {
+        font-size: 0.78rem;
+        padding: 8px 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1254,7 +1357,7 @@
       
       <!-- Custom Engraved Brass Nameplate -->
       <div class="brass-engraving-plaque" onclick="toggleWeddingDrawer()" title="Click to slide open wedding memories/card">
-        ✨ CUSTOM BUILT FOR SUMIT & NEETA — June 28, 2005 — INDORE ✨
+        ✨ CUSTOM BUILT FOR SUMIT &amp; NEETA — June 28, 2005 — INDORE ✨
       </div>
 
       <!-- HEADER BRANDING -->
@@ -1341,6 +1444,12 @@
               <span class="knob-label led-font">TUNING</span>
             </div>
           </div>
+
+          <!-- PLAY/PAUSE BUTTON -->
+          <button class="play-pause-btn" id="play-pause-btn" onclick="togglePlayPause()" title="Play / Pause Music">
+            <span class="pp-icon" id="play-pause-icon">▶</span>
+            <span class="pp-label" id="play-pause-label">PLAY</span>
+          </button>
 
           <!-- EM84 MAGIC EYE VALVE INDICATOR & MIC -->
           <div class="visual-feedback-row">
@@ -1497,14 +1606,14 @@
 
   <!-- SCRIPTS -->
   <script>
-    // 2005 BOLLYWOOD SONGS PLAYLIST (Corrected working YouTube video IDs)
+    // 2005 BOLLYWOOD SONGS PLAYLIST — all songs verified from the 2005 era
     const playlist = [
       { title: "Kajra Re", film: "Bunty Aur Babli", ytId: "7uV8p0-7p2M", freq: 91.5, mood: "dance" },
       { title: "Dhadak Dhadak", film: "Bunty Aur Babli", ytId: "R9K_J0uYy80", freq: 93.5, mood: "dance" },
-      { title: "Kuch To Hua Hai", film: "Kal Ho Na Ho", ytId: "unIz4LuG1Lj", freq: 98.3, mood: "romantic" },
-      { title: "Aankhon Mein Teri", film: "Om Shanti Om", ytId: "jQn84aQPIow", freq: 101.1, mood: "romantic" },
-      { title: "Sanam Re", film: "Sanam Re", ytId: "DS-raAyMxl4", freq: 102.8, mood: "romantic" },
-      { title: "Oh Meri Jaan", film: "Life in a Metro", ytId: "k5q640D757c", freq: 104.8, mood: "sad" },
+      { title: "Aashiq Banaya Aapne", film: "Aashiq Banaya Aapne", ytId: "GXNVV_GEFyM", freq: 98.3, mood: "dance" },
+      { title: "Dil Ne Dil Ko", film: "Lucky: No Time for Love", ytId: "mAHh_sWbMPY", freq: 101.1, mood: "romantic" },
+      { title: "Tumse Milke Dilka Jo Haal", film: "No Entry", ytId: "HnHlOg5V1UY", freq: 102.8, mood: "romantic" },
+      { title: "Bheege Honth Tere", film: "Murder", ytId: "8pJO3x6rlTQ", freq: 104.8, mood: "sad" },
       { title: "Agar Tum Mil Jao", film: "Zeher", ytId: "F3aJ2W2p-2M", freq: 106.4, mood: "romantic" },
       { title: "Woh Lamhe", film: "Zeher", ytId: "y12BRDS1CHI", freq: 107.8, mood: "sad" }
     ];
@@ -1670,14 +1779,22 @@ RULES:
     function startClock() {
       let currentHour = 7;
       let currentMin = 0;
+      let isPM = true; // We start at 7 PM (the radio broadcast time)
       clockTimer = setInterval(() => {
         currentMin++;
         if (currentMin >= 60) {
           currentMin = 0;
-          currentHour = (currentHour % 12) + 1;
+          currentHour++;
+          if (currentHour === 12) {
+            isPM = !isPM; // flip AM/PM at every 12
+          }
+          if (currentHour > 12) {
+            currentHour = 1;
+          }
         }
-        const minStr = currentMin < 10 ? '0' + currentMin : currentMin;
-        document.getElementById('clock-display').innerText = `${currentHour < 10 ? '0' + currentHour : currentHour}:${minStr} PM`;
+        const hourStr = currentHour < 10 ? '0' + currentHour : String(currentHour);
+        const minStr  = currentMin  < 10 ? '0' + currentMin  : String(currentMin);
+        document.getElementById('clock-display').innerText = `${hourStr}:${minStr} ${isPM ? 'PM' : 'AM'}`;
       }, 5000); // clock moves fast to simulate radio flow
     }
 
@@ -1744,7 +1861,42 @@ RULES:
     }
 
     function openSettings() {
-      document.getElementById('setup-modal').style.display = 'flex';
+      const modal = document.getElementById('setup-modal');
+      const modalContent = modal.querySelector('.modal-content');
+      // If the welcome-back screen replaced the form, restore the full input form
+      if (!modalContent.querySelector('#gemini-key')) {
+        modalContent.innerHTML = `
+          <h2 class="modal-title retro-font glowing-text">Radio Sitara Config</h2>
+          <div class="modal-input-group">
+            <label for="gemini-key">Gemini API Key</label>
+            <input type="password" id="gemini-key" placeholder="AIzaSy...">
+          </div>
+          <div class="modal-input-group">
+            <label for="eleven-key">ElevenLabs API Key (Optional)</label>
+            <input type="password" id="eleven-key" placeholder="sk_...">
+          </div>
+          <div class="modal-input-group">
+            <label for="voice-select">Voice ID Selection</label>
+            <select id="voice-select">
+              <option value="jsCqWAovK2LkecY7zXl4">Freya (Deep/Warm Multilingual V2)</option>
+              <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Clear/Classic Multilingual V2)</option>
+            </select>
+          </div>
+          <button class="modal-btn" onclick="saveSettings()">Save &amp; Turn On Radio</button>
+          <div class="modal-help">
+            <p>Get a free Gemini API Key from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>.</p>
+            <p>Get a free ElevenLabs Key from <a href="https://elevenlabs.io/" target="_blank">ElevenLabs</a>.</p>
+            <p style="margin-top: 10px; color: #ffaa66;">If no ElevenLabs Key is entered, the app defaults to Browser TTS fallback!</p>
+          </div>
+        `;
+        const savedGemini = localStorage.getItem('gemini_key');
+        const savedEleven = localStorage.getItem('eleven_key');
+        const savedVoice  = localStorage.getItem('voice_id');
+        if (savedGemini) document.getElementById('gemini-key').value = savedGemini;
+        if (savedEleven) document.getElementById('eleven-key').value = savedEleven;
+        if (savedVoice)  document.getElementById('voice-select').value = savedVoice;
+      }
+      modal.style.display = 'flex';
     }
 
     function updateNixieCounter() {
@@ -1761,6 +1913,8 @@ RULES:
     // INTRO OPENING SEQUENCE
     function startIntroSequence() {
       document.getElementById('intro-card').style.display = 'flex';
+      // Apply valve warm-up on the tuner window
+      document.querySelector('.tuner-window').classList.add('warming-up');
       
       const line1Text = "Hey Mom, hey Dad. You said time flies... so I built something to slow it down.";
       const line2Text = "Welcome to June 28, 2005.";
@@ -1977,8 +2131,18 @@ RULES:
           updateStatus(`🎵 NOW PLAYING: ${currentPlaylist[currentTrackIdx].title}`, "active-playing");
           startVisualizerPulse();
         }
+        // Sync play/pause button
+        const ppIcon  = document.getElementById('play-pause-icon');
+        const ppLabel = document.getElementById('play-pause-label');
+        if (ppIcon)  ppIcon.textContent  = '⏸';
+        if (ppLabel) ppLabel.textContent = 'PAUSE';
       } else if (event.data === YT.PlayerState.PAUSED) {
         stopVisualizerPulse();
+        // Sync play/pause button
+        const ppIcon  = document.getElementById('play-pause-icon');
+        const ppLabel = document.getElementById('play-pause-label');
+        if (ppIcon)  ppIcon.textContent  = '▶';
+        if (ppLabel) ppLabel.textContent = 'PLAY';
       }
     }
 
@@ -2386,7 +2550,13 @@ RULES:
         });
         
         const data = await response.json();
-        const textResponse = data.candidates[0].content.parts[0].text;
+        const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!textResponse) {
+          console.warn("Gemini returned no valid text candidate.", data);
+          addTransmissionFeed("SIGNAL LOST", "RJ Sumeeta ka signal kat gaya. Please retry.");
+          return null;
+        }
         
         // Append response to history
         conversationHistory.push({ role: "model", parts: [{ text: textResponse }] });
@@ -2858,21 +3028,42 @@ RULES:
 
     function typewriterScroll(container, text, index) {
       if (index < text.length) {
-        container.innerHTML += text.charAt(index);
-        document.getElementById('chat-paper').scrollTop = document.getElementById('chat-paper').scrollHeight;
+        // Use textContent to avoid HTML injection and prevent innerHTML re-parse flicker
+        container.textContent += text.charAt(index);
+        const paper = document.getElementById('chat-paper');
+        paper.scrollTop = paper.scrollHeight;
         setTimeout(() => {
           typewriterScroll(container, text, index + 1);
-        }, 15); // quick typewriter speed
+        }, 15);
       }
     }
 
     function shareMoment() {
       const url = window.location.href;
+      if (url.startsWith('file://')) {
+        alert("📡 Sharing Tip!\n\nYou're running this gift locally (file://), so the link only works on your device.\n\nTo share it with Sumit & Neeta ji, upload the index.html file to GitHub Pages or any free web host — then send them the URL!");
+        return;
+      }
       navigator.clipboard.writeText(url).then(() => {
-        alert("GitHub Pages URL copied to clipboard! Share the love with Sumit and Neeta ji.");
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
+        alert("💖 Link copied! Share this with Sumit & Neeta ji.");
+      }).catch(() => {
+        prompt("Copy this link to share:", url);
       });
+    }
+
+    // PLAY/PAUSE TOGGLE for the bakelite button
+    function togglePlayPause() {
+      if (!ytPlayer || typeof ytPlayer.getPlayerState !== 'function') {
+        addTransmissionFeed("SYSTEM", "Music player initializing... please wait a moment.");
+        return;
+      }
+      const state = ytPlayer.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        ytPlayer.pauseVideo();
+        updateStatus('⏸ PAUSED', 'active-tuning');
+      } else {
+        ytPlayer.playVideo();
+      }
     }
   </script>
 </body>
