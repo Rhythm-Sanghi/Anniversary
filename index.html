@@ -1323,10 +1323,17 @@
 
       <div class="modal-input-group">
         <label for="voice-select">Voice ID Selection</label>
-        <select id="voice-select">
-          <option value="jsCqWAovK2LkecY7zXl4">Freya (Deep/Warm Multilingual V2)</option>
-          <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Clear/Classic Multilingual V2)</option>
+        <select id="voice-select" onchange="toggleCustomVoiceInput()">
+          <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Warm & Reassuring - Free Tier)</option>
+          <option value="hpp4J3VqNfWAUOO0d1Us">Bella (Bright & Professional - Free Tier)</option>
+          <option value="cgSgspJ2msm6clMCkdW9">Jessica (Playful & Warm - Free Tier)</option>
+          <option value="FGY2WhTYpPnrIDTdsKH5">Laura (Quirky & Enthusiastic - Free Tier)</option>
+          <option value="custom">Custom Voice ID...</option>
         </select>
+      </div>
+      <div class="modal-input-group" id="custom-voice-group" style="display: none; margin-top: 10px;">
+        <label for="custom-voice-id">Custom Voice ID</label>
+        <input type="text" id="custom-voice-id" placeholder="Enter Voice ID...">
       </div>
 
       <button class="modal-btn" onclick="saveSettings()">Save & Turn On Radio</button>
@@ -1642,7 +1649,7 @@
     // API KEYS & STATE
     let GEMINI_API_KEY = "";
     let ELEVENLABS_API_KEY = "";
-    let VOICE_ID = "jsCqWAovK2LkecY7zXl4"; // Freya by default
+    let VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah (free premade) by default
     let charsSpent = 0;
     let ttsEnabled = true;
     let isRJSpeaking = false;
@@ -1766,6 +1773,30 @@ RULES:
     }
 
     // INITIALIZATION & SETTINGS
+    function toggleCustomVoiceInput() {
+      const select = document.getElementById('voice-select');
+      const customGroup = document.getElementById('custom-voice-group');
+      if (select && customGroup) {
+        customGroup.style.display = select.value === 'custom' ? 'block' : 'none';
+      }
+    }
+
+    function initializeVoiceForm() {
+      const savedVoice = localStorage.getItem('voice_id') || "EXAVITQu4vr4xnSDxMaL";
+      const select = document.getElementById('voice-select');
+      if (!select) return;
+      
+      const optionExists = Array.from(select.options).some(opt => opt.value === savedVoice);
+      if (optionExists) {
+        select.value = savedVoice;
+        document.getElementById('custom-voice-group').style.display = 'none';
+      } else {
+        select.value = 'custom';
+        document.getElementById('custom-voice-group').style.display = 'block';
+        document.getElementById('custom-voice-id').value = savedVoice;
+      }
+    }
+
     window.onload = () => {
       createParticles();
       
@@ -1777,7 +1808,7 @@ RULES:
       
       if (savedGemini) document.getElementById('gemini-key').value = savedGemini;
       if (savedEleven) document.getElementById('eleven-key').value = savedEleven;
-      if (savedVoice) document.getElementById('voice-select').value = savedVoice;
+      initializeVoiceForm();
       
       if (savedChars) {
         charsSpent = parseInt(savedChars);
@@ -1835,7 +1866,7 @@ RULES:
     function startWithSavedKeys() {
       GEMINI_API_KEY = localStorage.getItem('gemini_key');
       ELEVENLABS_API_KEY = localStorage.getItem('eleven_key') || "";
-      VOICE_ID = localStorage.getItem('voice_id') || "jsCqWAovK2LkecY7zXl4";
+      VOICE_ID = localStorage.getItem('voice_id') || "EXAVITQu4vr4xnSDxMaL";
       
       document.getElementById('setup-modal').style.display = 'none';
       
@@ -1853,7 +1884,16 @@ RULES:
     function saveSettings() {
       const gemini = document.getElementById('gemini-key').value.trim();
       const eleven = document.getElementById('eleven-key').value.trim();
-      const voice = document.getElementById('voice-select').value;
+      let voice = document.getElementById('voice-select').value;
+
+      if (voice === 'custom') {
+        const customVoice = document.getElementById('custom-voice-id').value.trim();
+        if (!customVoice) {
+          alert("Please enter a custom ElevenLabs Voice ID.");
+          return;
+        }
+        voice = customVoice;
+      }
 
       if (!gemini) {
         alert("Please enter a valid Gemini API Key.");
@@ -1899,10 +1939,17 @@ RULES:
           </div>
           <div class="modal-input-group">
             <label for="voice-select">Voice ID Selection</label>
-            <select id="voice-select">
-              <option value="jsCqWAovK2LkecY7zXl4">Freya (Deep/Warm Multilingual V2)</option>
-              <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Clear/Classic Multilingual V2)</option>
+            <select id="voice-select" onchange="toggleCustomVoiceInput()">
+              <option value="EXAVITQu4vr4xnSDxMaL">Sarah (Warm & Reassuring - Free Tier)</option>
+              <option value="hpp4J3VqNfWAUOO0d1Us">Bella (Bright & Professional - Free Tier)</option>
+              <option value="cgSgspJ2msm6clMCkdW9">Jessica (Playful & Warm - Free Tier)</option>
+              <option value="FGY2WhTYpPnrIDTdsKH5">Laura (Quirky & Enthusiastic - Free Tier)</option>
+              <option value="custom">Custom Voice ID...</option>
             </select>
+          </div>
+          <div class="modal-input-group" id="custom-voice-group" style="display: none; margin-top: 10px;">
+            <label for="custom-voice-id">Custom Voice ID</label>
+            <input type="text" id="custom-voice-id" placeholder="Enter Voice ID...">
           </div>
           <button class="modal-btn" onclick="saveSettings()">Save &amp; Turn On Radio</button>
           <div class="modal-help">
@@ -1913,10 +1960,9 @@ RULES:
         `;
         const savedGemini = localStorage.getItem('gemini_key');
         const savedEleven = localStorage.getItem('eleven_key');
-        const savedVoice  = localStorage.getItem('voice_id');
         if (savedGemini) document.getElementById('gemini-key').value = savedGemini;
         if (savedEleven) document.getElementById('eleven-key').value = savedEleven;
-        if (savedVoice)  document.getElementById('voice-select').value = savedVoice;
+        initializeVoiceForm();
       }
       modal.style.display = 'flex';
     }
@@ -2686,7 +2732,7 @@ RULES:
       updateLEDMarquee("RJ Sumeeta is speaking live...");
       
       ELEVENLABS_API_KEY = localStorage.getItem('eleven_key') || "";
-      VOICE_ID = localStorage.getItem('voice_id') || "jsCqWAovK2LkecY7zXl4";
+      VOICE_ID = localStorage.getItem('voice_id') || "EXAVITQu4vr4xnSDxMaL";
       
       // Remove any tags like [MOOD:X] from voice rendering
       let cleanText = text.replace(/\[MOOD:\w+\]/gi, '').trim();
