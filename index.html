@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Radio Sitara 91.5 FM — Indore (2005)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>">
   
   <!-- Retro & Vintage Typography -->
   <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Noto+Sans+Devanagari:wght@400;700&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
@@ -1859,6 +1860,11 @@ RULES:
         return;
       }
 
+      if (!gemini.startsWith("AIzaSy")) {
+        const proceed = confirm("Warning: Gemini API Keys typically start with 'AIzaSy'. The key you entered starts with '" + gemini.substring(0, 6) + "'. Are you sure you want to save this key?");
+        if (!proceed) return;
+      }
+
       localStorage.setItem('gemini_key', gemini);
       localStorage.setItem('eleven_key', eleven);
       localStorage.setItem('voice_id', voice);
@@ -2577,27 +2583,84 @@ RULES:
       
       updateStatus("📻 TUNING...", "active-tuning");
       
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: SYSTEM_PROMPT }]
-            },
-            contents: lastMessages,
-            generationConfig: {
-              temperature: 0.9
+      let response;
+      const maxRetries = 3;
+      let delay = 1000;
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: SYSTEM_PROMPT }]
+              },
+              contents: lastMessages,
+              generationConfig: {
+                temperature: 0.9
+              }
+            })
+          });
+          
+          if (response.ok) {
+            break;
+          }
+          
+          // Retry on transient status codes: 503, 429, or general 5xx
+          if (response.status === 503 || response.status === 429 || response.status >= 500) {
+            if (attempt < maxRetries - 1) {
+              console.warn(`Gemini API returned status ${response.status}. Retrying in ${delay}ms (Attempt ${attempt + 1}/${maxRetries})...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              delay *= 2;
+              continue;
             }
-          })
-        });
+          }
+          break; // Don't retry on other client errors (e.g. 400, 403)
+        } catch (err) {
+          if (attempt < maxRetries - 1) {
+            console.warn(`Network error during Gemini API call: ${err.message}. Retrying in ${delay}ms (Attempt ${attempt + 1}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+            continue;
+          }
+          console.error("Gemini API Connection Error: ", err);
+          addTransmissionFeed("SYSTEM ERROR", "Unable to establish contact with RJ Sumeeta's station due to a network connection issue.");
+          return null;
+        }
+      }
+      
+      if (!response || !response.ok) {
+        let errorMsg = `HTTP Error ${response ? response.status : 'Unknown'}`;
+        try {
+          const errData = await response.json();
+          if (errData?.error?.message) {
+            errorMsg += `: ${errData.error.message}`;
+          }
+        } catch (_) {}
         
+        console.error("Gemini API Error details:", errorMsg);
+        
+        if (response && (response.status === 400 || response.status === 403)) {
+          addTransmissionFeed("KEY ERROR", "RJ Sumeeta's key is invalid or restricted. Please check your Gemini API Key in the settings.");
+        } else if (response && response.status === 503) {
+          addTransmissionFeed("SIGNAL FADE", "Google's Gemini service is temporarily unavailable (503). Please try again in a moment.");
+        } else {
+          addTransmissionFeed("SIGNAL LOST", `RJ Sumeeta ka signal kat gaya. (${errorMsg})`);
+        }
+        return null;
+      }
+      
+      try {
         const data = await response.json();
         const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!textResponse) {
           console.warn("Gemini returned no valid text candidate.", data);
-          addTransmissionFeed("SIGNAL LOST", "RJ Sumeeta ka signal kat gaya. Please retry.");
+          // Check if blocked by safety
+          const blockReason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason;
+          const details = blockReason ? ` (Reason: ${blockReason})` : "";
+          addTransmissionFeed("SIGNAL BLOCKED", `Transmission blocked or no valid text returned${details}.`);
           return null;
         }
         
@@ -2606,8 +2669,8 @@ RULES:
         
         return textResponse;
       } catch (err) {
-        console.error("Gemini API Error: ", err);
-        addTransmissionFeed("SYSTEM ERROR", "Unable to establish contact with RJ Sumeeta's station.");
+        console.error("JSON parsing error in callGemini:", err);
+        addTransmissionFeed("SIGNAL LOST", "Received corrupt data packet from RJ Sumeeta.");
         return null;
       }
     }
