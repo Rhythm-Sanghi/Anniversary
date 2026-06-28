@@ -1606,6 +1606,21 @@
 
   <!-- SCRIPTS -->
   <script>
+    // Self-healing: Unregister any service workers from other projects on the github.io domain
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        let cleared = false;
+        for (let registration of registrations) {
+          registration.unregister();
+          cleared = true;
+        }
+        if (cleared) {
+          console.log("Stale Service Worker uninstalled. Force reloading page...");
+          window.location.reload(true);
+        }
+      });
+    }
+
     // 2005 BOLLYWOOD SONGS PLAYLIST — all songs verified from the 2005 era
     const playlist = [
       { title: "Kajra Re", film: "Bunty Aur Babli", ytId: "tp2lXkehi_I", freq: 91.5, mood: "dance" },
