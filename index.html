@@ -2717,7 +2717,20 @@ RULES:
             }
           );
           
-          if (!response.ok) throw new Error("TTS limits or invalid Key.");
+          if (!response.ok) {
+            let errorMsg = `HTTP Error ${response.status}`;
+            try {
+              const errData = await response.json();
+              if (errData?.detail?.message) {
+                errorMsg = errData.detail.message;
+              } else if (errData?.message) {
+                errorMsg = errData.message;
+              } else if (typeof errData?.detail === 'string') {
+                errorMsg = errData.detail;
+              }
+            } catch (_) {}
+            throw new Error(errorMsg);
+          }
           
           const audioBlob = await response.blob();
           const audioUrl = URL.createObjectURL(audioBlob);
@@ -2746,7 +2759,7 @@ RULES:
           
         } catch (err) {
           console.error("ElevenLabs failed, triggering fallback teleprinter typewriter animation:", err);
-          typewriterFallback(cleanText, true);
+          typewriterFallback(cleanText, true, err.message);
         }
       } else {
         // Fallback directly to browser TTS
@@ -2787,9 +2800,10 @@ RULES:
       window.speechSynthesis.speak(utterance);
     }
 
-    function typewriterFallback(text, wasError) {
+    function typewriterFallback(text, wasError, errorMessage) {
       if (wasError) {
-        addTransmissionFeed("SYSTEM", "ElevenLabs failed. Using Browser TTS voice fallback...");
+        const details = errorMessage ? `: ${errorMessage}` : "";
+        addTransmissionFeed("SYSTEM", `ElevenLabs failed${details}. Using Browser TTS voice fallback...`);
       } else {
         addTransmissionFeed("SYSTEM", "Browser TTS Active (ElevenLabs key omitted).");
       }
