@@ -1623,18 +1623,19 @@
 
     // 2005 BOLLYWOOD SONGS PLAYLIST — all songs verified from the 2005 era
     const playlist = [
-      { title: "Kajra Re", film: "Bunty Aur Babli", ytId: "4dsFQFCvVGU", freq: 91.5, mood: "dance" },
-      { title: "Dhadak Dhadak", film: "Bunty Aur Babli", ytId: "Db4Gj-vm97Y", freq: 93.5, mood: "dance" },
-      { title: "Aashiq Banaya Aapne", film: "Aashiq Banaya Aapne", ytId: "0bAVd9jJE2Q", freq: 98.3, mood: "dance" },
-      { title: "Sun Zara", film: "Lucky: No Time for Love", ytId: "FUHB9uO6mgs", freq: 101.1, mood: "romantic" },
-      { title: "Tumse Milke Dilka Jo Haal", film: "Main Hoon Na", ytId: "70kwKk0An3c", freq: 102.8, mood: "romantic" },
-      { title: "Bheege Honth Tere", film: "Murder", ytId: "ojUTswFMjyM", freq: 104.8, mood: "sad" },
-      { title: "Agar Tum Mil Jao", film: "Zeher", ytId: "iaSVzamZRjY", freq: 106.4, mood: "romantic" },
-      { title: "Woh Lamhe", film: "Zeher", ytId: "FLKxnL7KwHw", freq: 107.8, mood: "sad" }
+      { title: "Kajra Re", film: "Bunty Aur Babli", ytId: "4dsFQFCvVGU", backups: ["tp2lXkehi_I", "7uV8p0-7p2M"], freq: 91.5, mood: "dance" },
+      { title: "Dhadak Dhadak", film: "Bunty Aur Babli", ytId: "Db4Gj-vm97Y", backups: ["R9K_J0uYy80", "1uR6eH1hYfQ"], freq: 93.5, mood: "dance" },
+      { title: "Aashiq Banaya Aapne", film: "Aashiq Banaya Aapne", ytId: "0bAVd9jJE2Q", backups: ["B5-ULuOtc4A", "GXNVV_GEFyM"], freq: 98.3, mood: "dance" },
+      { title: "Sun Zara", film: "Lucky: No Time for Love", ytId: "FUHB9uO6mgs", backups: ["fevmvfW72_8", "e3TFNC-FRUA"], freq: 101.1, mood: "romantic" },
+      { title: "Tumse Milke Dilka Jo Haal", film: "Main Hoon Na", ytId: "70kwKk0An3c", backups: ["mXkbWKr5ovU", "HnHlOg5V1UY"], freq: 102.8, mood: "romantic" },
+      { title: "Bheege Honth Tere", film: "Murder", ytId: "ojUTswFMjyM", backups: ["0_nsjBJPZfs", "8pJO3x6rlTQ"], freq: 104.8, mood: "sad" },
+      { title: "Agar Tum Mil Jao", film: "Zeher", ytId: "iaSVzamZRjY", backups: ["4RxdlBHG8Jo", "F3aJ2W2p-2M"], freq: 106.4, mood: "romantic" },
+      { title: "Woh Lamhe", film: "Zeher", ytId: "FLKxnL7KwHw", backups: ["N5ISHFovVoQ", "y12BRDS1CHI"], freq: 107.8, mood: "sad" }
     ];
 
     let currentPlaylist = [...playlist];
     let currentTrackIdx = 0;
+    let currentBackupIdx = 0; // Failover backup ID index pointer
     let ytPlayer = null;
 
     // API KEYS & STATE
@@ -2117,7 +2118,25 @@ RULES:
 
     function onPlayerError(event) {
       console.error("YouTube Player Error: ", event.data);
-      addTransmissionFeed("SYSTEM", `Song "${currentPlaylist[currentTrackIdx].title}" restricted/geo-blocked (Error: ${event.data}). Skipping...`);
+      const track = currentPlaylist[currentTrackIdx];
+      
+      // Try playing backup streams if available
+      if (track.backups && currentBackupIdx < track.backups.length) {
+        const backupYtId = track.backups[currentBackupIdx];
+        currentBackupIdx++;
+        
+        console.warn(`Video ID ${track.ytId} failed. Trying backup ID: ${backupYtId}`);
+        addTransmissionFeed("SYSTEM", `⚠️ Proximity frequency weak for "${track.title}". Recalibrating signal (Attempt ${currentBackupIdx}/${track.backups.length})...`);
+        updateLEDMarquee(`RECALIBRATING BAND: Trying backup stream...`);
+        
+        // Load and play the backup stream
+        ytPlayer.loadVideoById(backupYtId);
+        ytPlayer.playVideo();
+        return;
+      }
+      
+      // Fallback skip if all backups are exhausted
+      addTransmissionFeed("SYSTEM", `Song "${track.title}" restricted/geo-blocked (Error: ${event.data}). Skipping...`);
       
       consecutiveErrors++;
       if (consecutiveErrors >= currentPlaylist.length) {
@@ -2190,6 +2209,9 @@ RULES:
       
       // Play Static & sweep
       triggerTuningSweepEffect();
+      
+      // Reset failover backup pointer
+      currentBackupIdx = 0;
       
       setTimeout(() => {
         ytPlayer.loadVideoById(track.ytId);
