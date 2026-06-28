@@ -1623,14 +1623,14 @@
 
     // 2005 BOLLYWOOD SONGS PLAYLIST — all songs verified from the 2005 era
     const playlist = [
-      { title: "Kajra Re", film: "Bunty Aur Babli", ytId: "tp2lXkehi_I", freq: 91.5, mood: "dance" },
+      { title: "Kajra Re", film: "Bunty Aur Babli", ytId: "4dsFQFCvVGU", freq: 91.5, mood: "dance" },
       { title: "Dhadak Dhadak", film: "Bunty Aur Babli", ytId: "Db4Gj-vm97Y", freq: 93.5, mood: "dance" },
-      { title: "Aashiq Banaya Aapne", film: "Aashiq Banaya Aapne", ytId: "B5-ULuOtc4A", freq: 98.3, mood: "dance" },
-      { title: "Dil Ne Dil Ko", film: "Lucky: No Time for Love", ytId: "e3TFNC-FRUA", freq: 101.1, mood: "romantic" },
-      { title: "Tumse Milke Dilka Jo Haal", film: "Main Hoon Na", ytId: "mXkbWKr5ovU", freq: 102.8, mood: "romantic" },
-      { title: "Bheege Honth Tere", film: "Murder", ytId: "0_nsjBJPZfs", freq: 104.8, mood: "sad" },
-      { title: "Agar Tum Mil Jao", film: "Zeher", ytId: "4RxdlBHG8Jo", freq: 106.4, mood: "romantic" },
-      { title: "Woh Lamhe", film: "Zeher", ytId: "N5ISHFovVoQ", freq: 107.8, mood: "sad" }
+      { title: "Aashiq Banaya Aapne", film: "Aashiq Banaya Aapne", ytId: "0bAVd9jJE2Q", freq: 98.3, mood: "dance" },
+      { title: "Sun Zara", film: "Lucky: No Time for Love", ytId: "FUHB9uO6mgs", freq: 101.1, mood: "romantic" },
+      { title: "Tumse Milke Dilka Jo Haal", film: "Main Hoon Na", ytId: "70kwKk0An3c", freq: 102.8, mood: "romantic" },
+      { title: "Bheege Honth Tere", film: "Murder", ytId: "ojUTswFMjyM", freq: 104.8, mood: "sad" },
+      { title: "Agar Tum Mil Jao", film: "Zeher", ytId: "iaSVzamZRjY", freq: 106.4, mood: "romantic" },
+      { title: "Woh Lamhe", film: "Zeher", ytId: "FLKxnL7KwHw", freq: 107.8, mood: "sad" }
     ];
 
     let currentPlaylist = [...playlist];
@@ -2087,6 +2087,11 @@ RULES:
     function onYouTubeIframeAPIReady() {
       const firstTrack = currentPlaylist[currentTrackIdx];
       
+      // Calculate a valid origin string, avoiding null values in local files
+      const pageOrigin = (window.location.origin && window.location.origin !== 'null') 
+        ? window.location.origin 
+        : window.location.protocol + '//' + window.location.host;
+
       ytPlayer = new YT.Player('youtube-player', {
         height: '200',
         width: '200',
@@ -2099,7 +2104,8 @@ RULES:
           rel: 0,
           showinfo: 0,
           modestbranding: 1,
-          origin: window.location.origin
+          enablejsapi: 1,
+          origin: pageOrigin
         },
         events: {
           'onReady': onPlayerReady,
